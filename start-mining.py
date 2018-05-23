@@ -14,15 +14,15 @@ def build_template(cfg: dict) -> dict:
     :param cfg: representation of the config
     :return: dictionary to be used with Template().substutute() function
     """
-    task: dict = cfg['main']
+    task = cfg['main']
 
     def concat(*dictionaries: dict) -> dict:
-        res: dict = dict()
+        res = dict()
         for d in dictionaries:
             res = {**res, **d}
         return res
 
-    template: dict = concat(task['miner'], task['pool'], cfg['rig'])
+    template = concat(task['miner'], task['pool'], cfg['rig'])
     return template
 
 
@@ -67,7 +67,7 @@ def run(conf_file: Path):
     os.system(cmd)
 
 def main():
-    conf_file_here = True  # Set to True for debug or experiments
+    conf_file_here = False  # Set to True for debug or experiments
 
     if conf_file_here:
         conf_file: Path = 'config.yaml'
