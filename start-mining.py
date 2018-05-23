@@ -1,68 +1,80 @@
 #!/usr/bin/env python3
 
-import sys,yaml
+from pathlib import Path
 from string import Template
 
+import os
+import yaml
 
-def find(f, seq):
-  """Return first item in sequence where f(item) == True."""
-  for item in seq:
-    if f(item):
-      return item
 
-inp = """\
+def build_template(cfg: dict) -> dict:
+    """
+    Build string's template dictionary
+    :rtype: dict
+    :param cfg: representation of the config
+    :return: dictionary to be used with Template().substutute() function
+    """
+    task: dict = cfg['main']
 
-rig:
-    name: rig
+    def concat(*dictionaries: dict) -> dict:
+        res: dict = dict()
+        for d in dictionaries:
+            res = {**res, **d}
+        return res
 
-coins:
-    - zec:
-        wallet: t1UzAvKXK6iiLZHPxzVTDZKuJ4juJbpVVcA
-        pool:
-          server: eu1-zcash.flypool.org
-          port: 3333
-          pwd: 2000
-  
-miners:
-    - ewbf:
-        path:  ".local/bin/ewbf-v0.3.4b"
-        bin:    miner
-        template: "--server $server --port $port --user $wallet --pass $pwd --eexit 1 --templimit 75 --fee 0" 
+    template: dict = concat(task['miner'], task['pool'], cfg['rig'])
+    return template
 
-task:
-    coin: zec
-    miner: ewbf
-"""
 
-cfg = yaml.load(inp)
-minerId = cfg['task']['miner']
-coinId = cfg['task']['coin']
+def create_command(cfg: dict) -> str:
+    """
+    Create a command to be executed to run miner
+    :rtype: str
+    :param cfg: representation of the config
+    :return: string to be passed to os.system() function
+    """
+    template = build_template(cfg)
+    path = str(absolutize(template['bin']))
+    args = Template(template['args']).substitute(template)
+    return path + " " + args
 
-coin = find(lambda c: coinId in c, cfg['coins'])[coinId]
 
-wallet = coin['wallet']
-pool = coin['pool']
-server = pool['server']
-port = pool['port']
-pwd = pool['pwd']
+def read_file(path: Path) -> dict:
+    with open(path, 'r') as file:
+        try:
+            config = yaml.load(file)
+            return config
+        except yaml.YAMLError as exc:
+            if hasattr(exc, 'problem_mark'):
+                mark = exc.problem_mark
+                print('Error position: ({}:{})', mark.line + 1, mark.column + 1, flush=True)
 
-miner = find(lambda m: minerId in m, cfg['miners'])[minerId]
-minerTemplate = miner['template']
-args = Template(minerTemplate).substitute(
-  server=server, port=port, wallet=wallet, pwd=pwd
-)
 
-"""
-coin = cfg['coins'].f
-wallet = coin['wallet']
-pool = coin['pools'][0]
-server = pool['server']
-port = pool['port']
-pwd = pool['pwd']
+def absolutize(rel: Path) -> Path:
+    """
+    Get absolute path
+    :rtype: Path
+    :param rel: relative to user's home path
+    :return: the absolute path
+    """
+    return Path().home().joinpath(rel)
 
-minerId = cfg['task']['miner']
-miner = cfg['miners'][minerId]
-minerFmt = str(miner['format'])
-"""
 
-print(args)
+def run(conf_file: Path):
+    cfg = read_file(conf_file)
+    cmd = create_command(cfg)
+    # print(cmd)
+    os.system(cmd)
+
+def main():
+    conf_file_here = True  # Set to True for debug or experiments
+
+    if conf_file_here:
+        conf_file: Path = 'config.yaml'
+    else:
+        conf_file: Path = absolutize('.settings/start-mining/config.yaml')
+    run(conf_file)
+
+
+if __name__ == '__main__':
+    main()

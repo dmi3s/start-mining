@@ -1,0 +1,45 @@
+---
+rig: { name: rig, templimit: 75 }
+
+wallets:
+    - &zec t1UzAvKXK6iiLZHPxzVTDZKuJ4juJbpVVcA
+    - &eth !!str 0x5BfcF35f33420b020e5d2f0A3d6152534d03305d
+
+miners:
+    - &ewbf
+        bin:  .local/share/ewbf-v0.3.4b/miner
+        args: >
+          --server $server --port $port --user $wallet.$name
+          --templimit $templimit --fee 0 --eexit 1
+    - &bminer
+        bin:  .local/share/bminer-v6.0.0-d111154/bminer
+        args: -uri ${scheme}://${wallet}@${server}:${port}
+    - &ethminer
+        bin:  .local/share/ethminer-v0.14.0/ethminer
+        args: -U -P ${scheme}://${wallet}@${server}:${port}
+
+pools:
+    - &flypool
+        wallet:  *zec
+        server:  eu1-zcash.flypool.org
+        port:    3333
+        pwd:     2000
+        scheme:  stratum
+    - &ethermine
+        wallet:  *eth
+        server:  eu1.ethermine.org
+        port:    5555
+        scheme:  stratum+ssl
+
+tasks:
+    - &zec-ewbf
+        miner: *ewbf
+        pool:  *flypool
+    - &zec-bminer
+        miner: *bminer
+        pool:  *flypool
+    - &eth-ethermine
+        miner: *ethminer
+        pool:  *ethermine
+        
+main: *zec-ewbf
