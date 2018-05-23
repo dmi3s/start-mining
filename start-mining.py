@@ -72,7 +72,7 @@ def main():
     if conf_file_here:
         conf_file: Path = 'config.yaml'
     else:
-        conf_file: Path = absolutize('.settings/start-mining/config.yaml')
+        conf_file: Path = absolutize('.config/start-mining/config.yaml')
     run(conf_file)
 
 
