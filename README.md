@@ -1,4 +1,5 @@
-### start-mining *yaml - based miners switcher python script*
+### start-mining 
+*yaml - based miners switcher python script*
 
 #### Install (linux) 
 ```bash
