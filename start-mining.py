@@ -52,7 +52,7 @@ def read_file(path: Path) -> dict:
 
 def absolutize(rel: Path) -> Path:
     """
-    Get absolute path
+    Return absolute path
     :rtype: Path
     :param rel: relative to user's home path
     :return: the absolute path
