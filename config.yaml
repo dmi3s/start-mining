@@ -1,16 +1,18 @@
 ---
-rig: { name: rig, templimit: 75 }
+rig: { name: rig, templimit: 78 }
 
 wallets:
     - &zec t1UzAvKXK6iiLZHPxzVTDZKuJ4juJbpVVcA
     - &eth !!str 0x5BfcF35f33420b020e5d2f0A3d6152534d03305d
+    - &btg GdYm1azonsyC57TZeh9tPx4ynXkrgojq2i
+    - &SuprNovaBtg dmi3s
 
 miners:
     - &ewbf
         bin:  .local/share/ewbf-v0.3.4b/miner
         args: >
           --server $server --port $port --user $wallet.$name
-          --templimit $templimit --fee 0 --eexit 1
+          --templimit $templimit --fee 0 --eexit 1 --solver 0 --pass $pwd
     - &bminer
         bin:  .local/share/bminer-v6.0.0-d111154/bminer
         args: -uri ${scheme}://${wallet}@${server}:${port}
@@ -25,12 +27,29 @@ pools:
         port:    3333
         pwd:     2000
         scheme:  stratum
+        pwd:     x
     - &ethermine
         wallet:  *eth
         server:  eu1.ethermine.org
         port:    5555
         scheme:  stratum+ssl
-
+    - &gold
+        wallet:  *btg
+        server:  eu.pool.gold
+        port:    3044
+        scheme:  stratum
+    - &SuprNova
+        wallet:  *SuprNovaBtg
+        server:  btg.suprnova.cc
+        port:    8816
+        scheme:  stratum
+        pwd:     x
+    - &to_miners-btg
+        wallet:  *btg
+        server:  btg.2miners.com-DoNotUse:swindlers
+        port:    4040
+        pwd:     x
+        
 tasks:
     - &zec-ewbf
         miner: *ewbf
@@ -41,5 +60,12 @@ tasks:
     - &eth-ethermine
         miner: *ethminer
         pool:  *ethermine
+    - &btg-ewbf
+        miner: *ewbf
+        pool:  *SuprNova
+    - &btg-ewbf-to_miners
+        miner: *ewbf
+        pool:  *to_miners-btg
         
-main: *zec-ewbf
+main: *btg-ewbf
+#main: *zec-ewbf
