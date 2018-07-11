@@ -67,7 +67,7 @@ def run(conf_file: Path):
     os.system(cmd)
 
 def main():
-    conf_file_here = False  # Set to True for debug or experiments
+    conf_file_here = False  # Set to True for debug or experimental runs
 
     if conf_file_here:
         conf_file: Path = 'config.yaml'
