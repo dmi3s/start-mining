@@ -1,11 +1,14 @@
 ---
-rig: { name: rig, templimit: 78 }
+rig: { name: rig, templimit: 75 }
 
 wallets:
     - &zec t1UzAvKXK6iiLZHPxzVTDZKuJ4juJbpVVcA
+#    - &zec zcTxY1kPSjzFPT42PKF9KTGgECMr5wbzrpzwWoDTeK91Dgu82Ybz9VbghsLMd3xMyXL1jQj5knmmNecRpWCHFyZNtfyDtG6
     - &eth !!str 0x5BfcF35f33420b020e5d2f0A3d6152534d03305d
     - &btg GdYm1azonsyC57TZeh9tPx4ynXkrgojq2i
-    - &SuprNovaBtg dmi3s
+    - &SuprNova dmi3s
+    - &binance zng4cWJhBRFKZadZ3zKoLfykAvs3j2hS71s
+    - &binance-xvg DSTaZtA3q8PUEhAjNXT5UMUYEtPdvoppB9
 
 miners:
     - &ewbf
@@ -19,8 +22,32 @@ miners:
     - &ethminer
         bin:  .local/share/ethminer-v0.14.0/ethminer
         args: -U -P ${scheme}://${wallet}@${server}:${port}
+    - &ccminer
+        bin:  .local/share/ccminer-v2.3-tpruvot/ccminer
+        args: -o ${scheme}://${server}:${port} -u ${wallet} -p ${pwd} ${extra_params}
 
 pools:
+    - &zpool-ca-xvg-scrypt
+        wallet:  *binance-xvg
+        server:  scrypt.mine.zpool.ca
+        port:    3433
+        pwd:     !!str c=XVG,scrypt
+        scheme:  stratum+tcp
+        extra_params: !!str --algo=scrypt --intensity=26 --max-temp=75
+    - &zpool-ca-xvg-lyra2z
+        wallet:  *binance-xvg
+        server:  lyra2z.mine.zpool.ca
+        port:    4553
+        pwd:     !!str c=XVG,lyra2z
+        scheme:  stratum+tcp
+        extra_params: !!str --algo=lyra2z --intensity=26 --max-temp=75
+    - &zpool-ca-xvg-lyra2v2
+        wallet:  *binance-xvg
+        server:  lyra2v2.mine.zpool.ca
+        port:    4533
+        pwd:     !!str c=XVG,lyra2v2,d=280
+        scheme:  stratum+tcp
+        extra_params: !!str --algo=lyra2v2 --intensity=22.75 --max-temp=75 
     - &flypool
         wallet:  *zec
         server:  eu1-zcash.flypool.org
@@ -38,16 +65,29 @@ pools:
         server:  eu.pool.gold
         port:    3044
         scheme:  stratum
-    - &SuprNova
-        wallet:  *SuprNovaBtg
+    - &SuprNova-btg
+        wallet:  *SuprNova
         server:  btg.suprnova.cc
         port:    8816
         scheme:  stratum
         pwd:     x
-    - &to_miners-btg
-        wallet:  *btg
-        server:  btg.2miners.com-DoNotUse:swindlers
-        port:    4040
+    - &SuprNova-zen
+        wallet: *SuprNova
+        server:  zen.suprnova.cc
+        port:    3618
+        scheme:  stratum
+        pwd:     x
+    - &SuprNova-zcl
+        wallet: *SuprNova
+        server:  zcl.suprnova.cc
+        port:    4042
+        scheme:  stratum
+        pwd:     x
+    - &ZenMiningPro
+        wallet: *binance
+        server:  eu.zenmine.pro
+        port:    9009
+        scheme:  stratum
         pwd:     x
         
 tasks:
@@ -62,10 +102,29 @@ tasks:
         pool:  *ethermine
     - &btg-ewbf
         miner: *ewbf
-        pool:  *SuprNova
-    - &btg-ewbf-to_miners
+        pool:  *SuprNova-btg
+    - &zen-ewbf
         miner: *ewbf
-        pool:  *to_miners-btg
-        
-main: *btg-ewbf
-#main: *zec-ewbf
+        pool:  *SuprNova-zen
+    - &zen-ewbf-mpro
+        miner: *ewbf
+        pool:  *ZenMiningPro
+    - &zcl-ewbf
+        miner: *ewbf
+        pool:  *SuprNova-zcl
+    - &xvg-zpool-ca-lyra2v2
+        miner: *ccminer
+        pool:  *zpool-ca-xvg-lyra2v2
+    - &xvg-zpool-ca-lyra2z
+        miner: *ccminer
+        pool:  *zpool-ca-xvg-lyra2z
+    - &xvg-zpool-ca-scrypt
+        miner: *ccminer
+        pool:  *zpool-ca-xvg-scrypt
+
+#main:  *xvg-zpool-ca-x17
+#main: *xvg-zpool-ca-scrypt
+#main: *xvg-zpool-ca-lyra2z
+#main: *xvg-zpool-ca-lyra2v2
+main: *zec-ewbf
+#main: *zcl-ewbf
