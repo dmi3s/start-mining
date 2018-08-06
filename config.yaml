@@ -1,5 +1,5 @@
 ---
-rig: { name: rig, templimit: 75 }
+rig: { name: rig, templimit: 78 }
 
 wallets:
     - &zec t1UzAvKXK6iiLZHPxzVTDZKuJ4juJbpVVcA
@@ -7,8 +7,14 @@ wallets:
     - &eth !!str 0x5BfcF35f33420b020e5d2f0A3d6152534d03305d
     - &btg GdYm1azonsyC57TZeh9tPx4ynXkrgojq2i
     - &SuprNova dmi3s
+    - &SuprNova-rvn-wallet dmi3s.rig
+    - &SuprNova-xvg-wallet dmi3s.rig
     - &binance zng4cWJhBRFKZadZ3zKoLfykAvs3j2hS71s
     - &binance-xvg DSTaZtA3q8PUEhAjNXT5UMUYEtPdvoppB9
+    - &yobit-xvg DAwrTWMYnfMCq64pr2tgzm3SzP1jEFt1ds
+    - &yobit-dash Xjjj2esnNS63deHTL559ugCJxV9qdydrdN
+    - &crypto-bridge-rvn RANVnFsVqVB2E5KCxMZwJxF9gsCeNSaCmy
+    - &yobit-lux 8vjae4GXc1k9qjCxR534o17SnzhK8JRvYb
 
 miners:
     - &ewbf
@@ -17,37 +23,76 @@ miners:
           --server $server --port $port --user $wallet.$name
           --templimit $templimit --fee 0 --eexit 1 --solver 0 --pass $pwd
     - &bminer
-        bin:  .local/share/bminer-v6.0.0-d111154/bminer
-        args: -uri ${scheme}://${wallet}@${server}:${port}
+        bin:  .local/share/bminer-v7.0.0-9c7291b/bminer
+        args: -uri ${scheme}://${wallet}@${server}:${port} ${extra_params}
     - &ethminer
         bin:  .local/share/ethminer-v0.14.0/ethminer
         args: -U -P ${scheme}://${wallet}@${server}:${port}
     - &ccminer
         bin:  .local/share/ccminer-v2.3-tpruvot/ccminer
         args: -o ${scheme}://${server}:${port} -u ${wallet} -p ${pwd} ${extra_params}
-
+    - &suprminer-x16r
+        bin:  .local/share/suprminer-x16r-v1.6/ccminer
+        args: -a x16r -o ${scheme}://${server}:${port} -u ${wallet} -p ${pwd} ${extra_params}
+    - &ravecoin-miner
+        bin:  .local/share/ravecoin-v2.6/ccminer
+        args: --donate 0 -N 600 -o ${scheme}://${server}:${port} -u ${wallet} -p ${pwd} ${extra_params}
+    - &nheqminer
+        bin:  .local/share/nheqminer-v0.5c/nheqminer
+        args: -l ${server}:${port} -u ${wallet} ${extra_params}
+    - &crypto-dredge
+        bin:  .local/share/cryptodredge-v0.8.2/CryptoDredge
+        args: -o ${scheme}://${server}:${port} -u ${wallet} -p ${pwd} ${extra_params}
 pools:
+    - &pickaxe-pro
+        wallet:  *crypto-bridge-rvn
+        server:  rvn.pickaxe.pro
+        port:    3636
+        pwd:     x
+        scheme:  stratum+tcp
+        extra_params: !!str --intensity=20 --max-temp=75
     - &zpool-ca-xvg-scrypt
-        wallet:  *binance-xvg
+        wallet:  *yobit-xvg
         server:  scrypt.mine.zpool.ca
         port:    3433
         pwd:     !!str c=XVG,scrypt
         scheme:  stratum+tcp
         extra_params: !!str --algo=scrypt --intensity=26 --max-temp=75
     - &zpool-ca-xvg-lyra2z
-        wallet:  *binance-xvg
+        wallet:  *yobit-xvg
         server:  lyra2z.mine.zpool.ca
         port:    4553
         pwd:     !!str c=XVG,lyra2z
         scheme:  stratum+tcp
         extra_params: !!str --algo=lyra2z --intensity=26 --max-temp=75
     - &zpool-ca-xvg-lyra2v2
-        wallet:  *binance-xvg
+        wallet:  *yobit-xvg
         server:  lyra2v2.mine.zpool.ca
         port:    4533
         pwd:     !!str c=XVG,lyra2v2,d=280
         scheme:  stratum+tcp
-        extra_params: !!str --algo=lyra2v2 --intensity=22.75 --max-temp=75 
+        extra_params: !!str --algo=lyra2v2 --intensity=22.75 --max-temp=75
+    - &zpool-ca-xvg-x16r
+        wallet:  *yobit-xvg
+        server:  x16r.mine.zpool.ca
+        port:    3636
+        pwd:     !!str c=XVG,x16r
+        scheme:  stratum+tcp
+        extra_params: !!str --algo=x16r --max-temp=75 
+    - &zpool-ca-dash-x16r
+        wallet:  *yobit-dash
+        server:  x16r.mine.zpool.ca
+        port:    3636
+        pwd:     !!str c=DASH,x16r
+        scheme:  stratum+tcp
+        extra_params: !!str --algo=x16r --max-temp=75
+    - &zpool-ca-dash-equihash
+        wallet:  *yobit-dash
+        server:  equihash.mine.zpool.ca
+        port:    2142
+        pwd:     !!str c=DASH,equihash
+        scheme:  stratum
+        extra_params: !!str -max-temperature=75 -nofee
     - &flypool
         wallet:  *zec
         server:  eu1-zcash.flypool.org
@@ -55,6 +100,7 @@ pools:
         pwd:     2000
         scheme:  stratum
         pwd:     x
+        extra_params: -cd 0 1 2 -cv 1 1 1
     - &ethermine
         wallet:  *eth
         server:  eu1.ethermine.org
@@ -65,6 +111,20 @@ pools:
         server:  eu.pool.gold
         port:    3044
         scheme:  stratum
+    - &SuprNova-xvg-lyra
+        wallet:  *SuprNova-xvg-wallet
+        server:  xvg-lyra.suprnova.cc
+        port:    2595
+        scheme:  stratum+tcp
+        extra_params: !!str --algo=lyra2v2 --intensity=22.75 --max-temp=75
+        pwd:     x
+    - &SuprNova-xvg-lyra-cd
+        wallet:  *SuprNova-xvg-wallet
+        server:  xvg-lyra.suprnova.cc
+        port:    2595
+        scheme:  stratum+tcp
+        extra_params: !!str --algo lyra2v2 -i 8 
+        pwd:     x
     - &SuprNova-btg
         wallet:  *SuprNova
         server:  btg.suprnova.cc
@@ -83,14 +143,59 @@ pools:
         port:    4042
         scheme:  stratum
         pwd:     x
+    - &SuprNova-rvn
+        wallet: *SuprNova-rvn-wallet
+        server: rvn.suprnova.cc
+        port:   6667
+        scheme: stratum+tcp
+        pwd:    !!str rig
+#        extra_params: !!str --intensity=21 --max-temp=75 
+        extra_params: !!str --intensity=20 --max-temp=75 --algo=x16r
     - &ZenMiningPro
         wallet: *binance
         server:  eu.zenmine.pro
         port:    9009
         scheme:  stratum
         pwd:     x
-        
+    - &Blockmasters-co-lux
+        wallet: *yobit-lux
+        server: blockmasters.co
+        port:   8332
+        scheme: stratum+tcp
+        pwd:   !!str c=LUX,mc=LUX
+        extra_params: !!str --intensity=20 --max-temp=75 --algo=phi2
+    - &Blockmasters-co-xvg-lyra
+        wallet: *yobit-xvg
+        server: blockmasters.co
+        port:   4533
+        scheme: stratum+tcp
+        pwd:   !!str c=XVGlyra,mc=XVGlyra
+        extra_params: !!str --intensity=22.75 --max-temp=75 --algo=lyra2v2
+    - &Blockmasters-co-xvg-lyra-cd
+        wallet: *yobit-xvg
+        server: blockmasters.co
+        port:   4533
+        scheme: stratum+tcp
+        pwd:   !!str c=XVGlyra,mc=XVGlyra
+        extra_params: !!str --algo lyra2v2 -i 8
+    - &Zergpool-com-xvg-lyra-cd
+        wallet: *yobit-xvg
+        server: lyra2v2.mine.zergpool.com
+        port:   4533
+        scheme: stratum+tcp
+        pwd:   !!str c=XVG-lyra2v2,mc=XVG-lyra2v2
+        extra_params: !!str --algo lyra2v2 -i 8
+
 tasks:
+    - &rvn-ravecoin-pickaxe
+        miner: *ravecoin-miner
+        pool:  *pickaxe-pro
+    - &rvn-ravecoin-miner
+        miner: *ravecoin-miner
+        pool:  *SuprNova-rvn
+    - &rvn-suprminer
+        miner: *suprminer-x16r
+        pool:  *SuprNova-rvn
     - &zec-ewbf
         miner: *ewbf
         pool:  *flypool
@@ -118,13 +223,62 @@ tasks:
     - &xvg-zpool-ca-lyra2z
         miner: *ccminer
         pool:  *zpool-ca-xvg-lyra2z
+    - &xvg-suprnova-lyra
+        miner: *ccminer
+        pool:  *SuprNova-xvg-lyra
     - &xvg-zpool-ca-scrypt
         miner: *ccminer
         pool:  *zpool-ca-xvg-scrypt
-
+    - &xvg-zpool-ca-x16r
+        miner: *ravecoin-miner
+        pool:  *zpool-ca-xvg-x16r
+    - &dash-zpool-ca-x16r
+        miner: *ravecoin-miner
+        pool:  *zpool-ca-dash-x16r
+    - &dash-zpool-ca-equihash
+        miner: *bminer
+        pool:  *zpool-ca-dash-equihash
+    - &zec-nheq
+        miner: *nheqminer
+        pool:  *flypool
+    - &lux-blockmasters
+        miner: *ccminer
+        pool:  *Blockmasters-co-lux
+    - &xvg-blockmasters-lyra
+        miner: *ccminer
+        pool:  *Blockmasters-co-xvg-lyra
+    - &xvg-blockmasters-lyra-cd
+        miner: *crypto-dredge
+        pool:  *Blockmasters-co-xvg-lyra-cd
+    - &xvg-suprnova-lyra-cd
+        miner: *crypto-dredge
+        pool:  *SuprNova-xvg-lyra-cd
+    - &xvg-zergpool-lyra-cd
+        miner: *crypto-dredge
+        pool:  *Zergpool-com-xvg-lyra-cd
+        
 #main:  *xvg-zpool-ca-x17
 #main: *xvg-zpool-ca-scrypt
 #main: *xvg-zpool-ca-lyra2z
 #main: *xvg-zpool-ca-lyra2v2
-main: *zec-ewbf
+#main: *xvg-zpool-ca-x16r
+#main: *dash-zpool-ca-x16r
+
+#main: *dash-zpool-ca-equihash
+
+#main: *lux-blockmasters
+#main: *xvg-blockmasters-lyra
+
+
+#main: *xvg-blockmasters-lyra-cd
+main: *xvg-zergpool-lyra-cd
+
+#main: *xvg-suprnova-lyra-cd
+
+#main: *xvg-suprnova-lyra
+#main: *zec-nheq
+#main: *zec-ewbf
 #main: *zcl-ewbf
+#main: *rvn-suprminer
+#main: *rvn-ravecoin-miner
+#main: *rvn-ravecoin-pickaxe
